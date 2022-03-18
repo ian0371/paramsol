@@ -17,6 +17,8 @@ contract GovParam is Ownable {
         bytes   nextValue;   // RLP encoded value after nextBlock
     }
 
+    event SetParam(uint, string, bytes, uint64);
+
     constructor(address _owner) {
         if (_owner != address(0)) {
             console.log("Transferring ownership to", _owner);
@@ -34,7 +36,19 @@ contract GovParam is Ownable {
         });
     }
 
+    function setParam(uint id, bytes calldata value, uint64 _fromBlock) public {
+        require(params[id].fromBlock < block.number, "already have a pending change");
+        require(bytes(params[id].name).length > 0, "no such parameter");
+
+        params[id].prevValue = params[id].nextValue;
+        params[id].fromBlock = _fromBlock;
+        params[id].nextValue = value;
+
+        emit SetParam(id, params[id].name, value, _fromBlock);
+    }
+
     function getParam(uint id) external view returns (bytes memory) {
+        console.log('now:',block.number);
         if (block.number >= params[id].fromBlock) {
             return params[id].nextValue;
         }
