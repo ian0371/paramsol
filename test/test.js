@@ -169,3 +169,21 @@ describe("scheduledChanges", function () {
     expect(p[0]).to.equal(0);
   });
 });
+
+describe("addValidator", function () {
+  let gp;
+
+  beforeEach(async function () {
+    const accounts = await hre.ethers.getSigners();
+    const GovParam = await ethers.getContractFactory("GovParam");
+    gp = await GovParam.deploy(accounts[1].address);
+    await gp.deployed();
+  });
+
+  it("addValidator success", async function () {
+    for (addr of await hre.ethers.getSigners()) {
+      gp.addValidator(addr.address);
+    }
+    console.log(await gp.getValidators());
+  });
+});

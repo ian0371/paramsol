@@ -9,6 +9,12 @@ contract GovParam is Ownable {
     mapping(uint => Param) public params;
     uint[] public paramIds;
 
+    address[] validators;
+
+    // For quick lookup and array manipulation
+    // 0: not validator, n: stored at validator[n-1]
+    mapping(address => uint) validatorIdx; 
+
     struct Param {
         bytes32 name;      // ex) "istanbul.epoch"
         bool    votable;   // true: owner&voter can change, false: only owner
@@ -82,5 +88,14 @@ contract GovParam is Ownable {
             }
         }
         return (cnt, c);
+    }
+
+    function addValidator(address v) public returns (bool) {
+        validators.push(v);
+        validatorIdx[v] = validators.length;
+    }
+
+    function getValidators() public view returns (address[] memory) {
+        return validators;
     }
 }
