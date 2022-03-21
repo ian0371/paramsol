@@ -58,4 +58,8 @@ contract GovParam is Ownable {
             return params[id].prevValue;
         }
     }
+
+    function scheduledChanges() external view returns (uint[] memory) {
+        return paramIds;
+    }
 }
