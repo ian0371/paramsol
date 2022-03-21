@@ -155,7 +155,8 @@ describe("scheduledChanges", function () {
     }
 
     p = await gp.scheduledChanges();
-    expect(p.length).to.equal(params.length);
+    console.log(p);
+    expect(p[0]).to.equal(params.length);
 
     await mineMoreBlocks(await getnow() + 10000);
 
@@ -163,5 +164,8 @@ describe("scheduledChanges", function () {
       p = await gp.getParam(param.id);
       expect(p).to.equal(param.after);
     }
+
+    p = await gp.scheduledChanges();
+    expect(p[0]).to.equal(0);
   });
 });

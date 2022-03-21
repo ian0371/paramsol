@@ -17,6 +17,13 @@ contract GovParam is Ownable {
         bytes32 nextValue; // RLP encoded value after nextBlock
     }
 
+    // only for scheduledChanges()
+    struct Changes {
+        bytes32 name;
+        uint64  blocknum;
+        bytes32 value;
+    }
+
     event SetParam(uint, bytes32, bytes32, uint64);
 
     constructor(address _owner) {
@@ -59,7 +66,21 @@ contract GovParam is Ownable {
         }
     }
 
-    function scheduledChanges() external view returns (uint[] memory) {
-        return paramIds;
+    function scheduledChanges() external view returns (uint n, Changes[] memory) {
+        Changes[] memory c = new Changes[](paramIds.length);
+        uint cnt = 0;
+        for (uint i = 0; i < paramIds.length; i++) {
+            Param memory p = params[paramIds[i]];
+            if (p.fromBlock > block.number) {
+                Changes memory _c = Changes({
+                    name: p.name,
+                    blocknum: p.fromBlock,
+                    value: p.nextValue
+                });
+                c[cnt] = _c;
+                cnt++;
+            }
+        }
+        return (cnt, c);
     }
 }
