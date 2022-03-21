@@ -117,7 +117,6 @@ describe("setParam", function () {
     now = await getnow();
     await gp.setParam(param.id, param.after, now + 10000);
     p = await gp.getParam(param.id);
-    console.log(p);
     expect(p).to.equal(param.before);
     expect(p).to.emit(gp, 'SetParam').withArgs(param.id, param.name, param.after, now + 10000);
 
@@ -147,7 +146,6 @@ describe("scheduledChanges", function () {
       p = await gp.setParam(param.id, param.after, now + 10000);
       expect(p).to.emit(gp, 'SetParam').withArgs(param.id, param.name, after, now + 10000);
     }
-    console.log(await hre.network.provider.send("eth_blockNumber"));
 
     for (param of params) {
       p = await gp.getParam(param.id);
@@ -155,7 +153,6 @@ describe("scheduledChanges", function () {
     }
 
     p = await gp.scheduledChanges();
-    console.log(p);
     expect(p[0]).to.equal(params.length);
 
     await mineMoreBlocks(await getnow() + 10000);
@@ -181,9 +178,11 @@ describe("addValidator", function () {
   });
 
   it("addValidator success", async function () {
-    for (addr of await hre.ethers.getSigners()) {
+    const accounts = await hre.ethers.getSigners();
+    for (addr of accounts) {
       gp.addValidator(addr.address);
     }
-    console.log(await gp.getValidators());
+    v = await gp.getValidators();
+    expect(v.length).to.equal(accounts.length);
   });
 });
