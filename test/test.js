@@ -7,6 +7,7 @@ const EMPTYNAME_DENIED = 'name cannot be empty';
 const EXISTING_PARAM = 'already existing id';
 const NO_PARAM = 'no such parameter';
 const ALREADY_PENDING = 'already have a pending change';
+const ALREADY_PAST = 'cannot set fromBlock to past';
 
 function encode(data) {
   let buf;
@@ -167,6 +168,15 @@ describe("GovParam", function () {
       await gp.setParam(param.id, param.after, now + 10000);
       await expect(gp.setParam(param.id, param.after, now + 10000))
         .to.be.revertedWith(ALREADY_PENDING);
+    });
+    
+    it("setParam for past block should fail", async function () {
+      param = params[0];
+      await gp.addParam(param.id, param.name, param.votable, param.before);
+
+      now = await getnow();
+      await expect(gp.setParam(param.id, param.after, now - 50))
+        .to.be.revertedWith(ALREADY_PAST);
     });
   });
 

@@ -84,6 +84,7 @@ contract GovParam is Ownable {
     function setParam(uint id, bytes32 value, uint64 _fromBlock) public 
     onlyVotable {
         require(params[id].fromBlock < block.number, "already have a pending change");
+        require(block.number < _fromBlock, "cannot set fromBlock to past");
         require(params[id].name != bytes32(0), "no such parameter");
 
         params[id].prevValue = params[id].nextValue;
