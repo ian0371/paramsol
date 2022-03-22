@@ -125,6 +125,7 @@ contract GovParam is Ownable {
 
     function addValidator(address v) public {
         require(msg.sender == owner() || (updateValsVotable && msg.sender == voteContract), "permission denied");
+        require(validatorIdx[v] == 0, "validator already exists");
         validators.push(v);
         validatorIdx[v] = validators.length;
         emit ValidatorAdded(v);

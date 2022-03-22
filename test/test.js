@@ -9,6 +9,7 @@ const NO_PARAM = 'no such parameter';
 const ALREADY_PENDING = 'already have a pending change';
 const ALREADY_PAST = 'cannot set fromBlock to past';
 const ONE_VAL_REQUIRED = 'at least one validator required';
+const VAL_ALREADY_EXIST = 'validator already exists';
 const NO_VAL = 'no such validator';
 
 function encode(data) {
@@ -260,8 +261,14 @@ describe("GovParam", function () {
 
     it("addValidator from voteContract should fail when not votable", async function () {
       await gp.setVoteContract(voteContract.address);
-      await expect(gp.connect(voteContract).addValidator(addr))
+      await expect(gp.connect(voteContract).addValidator(addrs[0]))
         .to.be.revertedWith(PERMISSION_DENIED);
+    });
+
+    it("addValidator should fail if validator exists", async function () {
+      gp.addValidator(addrs[0]);
+      await expect(gp.addValidator(addrs[0]))
+        .to.be.revertedWith(VAL_ALREADY_EXIST);
     });
   });
 
