@@ -241,6 +241,26 @@ describe("GovParam", function () {
       v = await gp.getValidators();
       expect(v.length).to.equal(addrs.length);
     });
+
+    it("addValidator from nonvoter should fail", async function () {
+      await expect(gp.connect(nonvoter).addValidator(addrs[1]))
+        .to.be.revertedWith(PERMISSION_DENIED);
+    });
+
+    it("addValidator from voteContract should succeed when votable", async function () {
+      await gp.setVoteContract(voteContract.address);
+      await gp.setUpdateValsVotable(true);
+      expect(await gp.connect(voteContract).addValidator(addrs[1]))
+        .to.emit(gp, 'ValidatorAdded').withArgs(addrs[1]);
+      v = await gp.getValidators();
+      expect(v[0]).to.equal(addrs[1]);
+    });
+
+    it("addValidator from voteContract should fail when not votable", async function () {
+      await gp.setVoteContract(voteContract.address);
+      await expect(gp.connect(voteContract).addValidator(addr))
+        .to.be.revertedWith(PERMISSION_DENIED);
+    });
   });
 
   function removeValidator(arr, addr) {
