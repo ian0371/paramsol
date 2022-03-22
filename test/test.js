@@ -2,6 +2,8 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const _ = require("lodash");
 
+const DENIED = 'permission denied';
+
 function encode(data) {
   let buf;
   if (typeof data == 'string') {
@@ -72,152 +74,116 @@ for ([i, param] of params.entries()) {
   param.id = i;
 }
 
-describe("constructor", function () {
-  it("Constructor success", async function () {
-    const accounts = await hre.ethers.getSigners();
-    const GovParam = await ethers.getContractFactory("GovParam");
-    const gp = await GovParam.deploy(accounts[1].address);
-    await gp.deployed();
-
-    expect(await gp.owner()).to.equal(accounts[1].address);
-  });
-});
-
-describe("addParam", function () {
+describe("GovParam", function () {
+  let accounts, addrs;
   let gp;
-
+  
   beforeEach(async function () {
-    const accounts = await hre.ethers.getSigners();
+    accounts = await hre.ethers.getSigners();
+    addrs = _.map(accounts, 'address');
     const GovParam = await ethers.getContractFactory("GovParam");
-    gp = await GovParam.deploy(accounts[1].address);
+    gp = await GovParam.deploy(addrs[0]);
     await gp.deployed();
   });
 
-  it("addParam success", async function () {
-    param = params[0];
-    await gp.addParam(param.id, param.name, false, param.before);
-    p = await gp.getParam(0);
-    expect(p).to.equal(param.before);
-  });
-});
+  describe("constructor", function () {
+    it("Constructor success", async function () {
+      let GovParam = await ethers.getContractFactory("GovParam");
+      let gp = await GovParam.deploy(addrs[1]);
+      await gp.deployed();
 
-describe("setParam", function () {
-  let gp;
-
-  beforeEach(async function () {
-    const accounts = await hre.ethers.getSigners();
-    const GovParam = await ethers.getContractFactory("GovParam");
-    gp = await GovParam.deploy(accounts[1].address);
-    await gp.deployed();
+      expect(await gp.owner()).to.equal(addrs[1]);
+    });
   });
 
-  it("setParam success", async function () {
-    param = params[0];
-    await gp.addParam(param.id, param.name, param.votable, param.before);
-
-    now = await getnow();
-    await gp.setParam(param.id, param.after, now + 10000);
-    p = await gp.getParam(param.id);
-    expect(p).to.equal(param.before);
-    expect(p).to.emit(gp, 'SetParam').withArgs(param.id, param.name, param.after, now + 10000);
-
-    await mineMoreBlocks(10000);
-    p = await gp.getParam(param.id);
-    expect(p).to.equal(param.after);
-  });
-});
-
-describe("scheduledChanges", function () {
-  let gp;
-
-  beforeEach(async function () {
-    const accounts = await hre.ethers.getSigners();
-    const GovParam = await ethers.getContractFactory("GovParam");
-    gp = await GovParam.deploy(accounts[1].address);
-    await gp.deployed();
+  describe("addParam", function () {
+    it("addParam success", async function () {
+      param = params[0];
+      await gp.addParam(param.id, param.name, false, param.before);
+      p = await gp.getParam(0);
+      expect(p).to.equal(param.before);
+    });
   });
 
-  it("scheduledChanges success", async function () {
-    for (param of params) {
+  describe("setParam", function () {
+    it("setParam success", async function () {
+      param = params[0];
       await gp.addParam(param.id, param.name, param.votable, param.before);
-    }
 
-    for (param of params) {
       now = await getnow();
-      p = await gp.setParam(param.id, param.after, now + 10000);
-      expect(p).to.emit(gp, 'SetParam').withArgs(param.id, param.name, after, now + 10000);
-    }
-
-    for (param of params) {
+      await gp.setParam(param.id, param.after, now + 10000);
       p = await gp.getParam(param.id);
       expect(p).to.equal(param.before);
-    }
+      expect(p).to.emit(gp, 'SetParam').withArgs(param.id, param.name, param.after, now + 10000);
 
-    p = await gp.scheduledChanges();
-    expect(p[0]).to.equal(params.length);
-
-    await mineMoreBlocks(await getnow() + 10000);
-
-    for (param of params) {
+      await mineMoreBlocks(10000);
       p = await gp.getParam(param.id);
       expect(p).to.equal(param.after);
-    }
-
-    p = await gp.scheduledChanges();
-    expect(p[0]).to.equal(0);
-  });
-});
-
-describe("addValidator", function () {
-  let gp;
-
-  beforeEach(async function () {
-    const accounts = await hre.ethers.getSigners();
-    const GovParam = await ethers.getContractFactory("GovParam");
-    gp = await GovParam.deploy(accounts[1].address);
-    await gp.deployed();
+    });
   });
 
-  it("addValidator success", async function () {
-    const accounts = await hre.ethers.getSigners();
-    for (addr of accounts) {
-      await gp.addValidator(addr.address);
-    }
-    v = await gp.getValidators();
-    expect(v.length).to.equal(accounts.length);
+  describe("scheduledChanges", function () {
+    it("scheduledChanges success", async function () {
+      for (param of params) {
+        await gp.addParam(param.id, param.name, param.votable, param.before);
+      }
+
+      for (param of params) {
+        now = await getnow();
+        p = await gp.setParam(param.id, param.after, now + 10000);
+        expect(p).to.emit(gp, 'SetParam').withArgs(param.id, param.name, after, now + 10000);
+      }
+
+      for (param of params) {
+        p = await gp.getParam(param.id);
+        expect(p).to.equal(param.before);
+      }
+
+      p = await gp.scheduledChanges();
+      expect(p[0]).to.equal(params.length);
+
+      await mineMoreBlocks(await getnow() + 10000);
+
+      for (param of params) {
+        p = await gp.getParam(param.id);
+        expect(p).to.equal(param.after);
+      }
+
+      p = await gp.scheduledChanges();
+      expect(p[0]).to.equal(0);
+    });
   });
-});
 
-function removeValidator(arr, addr) {
-  idx = arr.indexOf(addr);
-  elem = arr.pop();
-  arr[idx] = elem;
-  return arr;
-}
-
-describe("removeValidator", function () {
-  let gp;
-
-  beforeEach(async function () {
-    const accounts = await hre.ethers.getSigners();
-    const GovParam = await ethers.getContractFactory("GovParam");
-    gp = await GovParam.deploy(accounts[1].address);
-    await gp.deployed();
-  });
-
-  it("removeValidator success", async function () {
-    var accounts = await hre.ethers.getSigners();
-    var var_accounts = await hre.ethers.getSigners();
-    accounts = _.map(accounts, 'address');
-    var_accounts = _.map(var_accounts, 'address');
-    for (addr of accounts) {
-      gp.addValidator(addr);
-    }
-    for (addr of [accounts[0], accounts[3], accounts[11]]) {
-      await gp.removeValidator(addr);
-      var_accounts = removeValidator(var_accounts, addr);
+  describe("addValidator", function () {
+    it("addValidator success", async function () {
+      for (addr of addrs) {
+        await gp.addValidator(addr);
+      }
       v = await gp.getValidators();
-      expect(v).to.deep.equal(var_accounts);
-    }
+      expect(v.length).to.equal(addrs.length);
+    });
+  });
+
+  function removeValidator(arr, addr) {
+    idx = arr.indexOf(addr);
+    elem = arr.pop();
+    arr[idx] = elem;
+    return arr;
+  }
+
+  describe("removeValidator", function () {
+    it("removeValidator success", async function () {
+      var var_accounts = await hre.ethers.getSigners();
+      var_accounts = _.map(var_accounts, 'address');
+      for (addr of addrs) {
+        gp.addValidator(addr);
+      }
+      for (addr of [addrs[0], addrs[3], addrs[11]]) {
+        await gp.removeValidator(addr);
+        var_accounts = removeValidator(var_accounts, addr);
+        v = await gp.getValidators();
+        expect(v).to.deep.equal(var_accounts);
+      }
+    });
   });
 });
