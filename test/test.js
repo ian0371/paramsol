@@ -115,19 +115,19 @@ describe("GovParam", function () {
       expect(p).to.equal(param.before);
     });
 
-    it("addParam for nonvoter should fail", async function () {
+    it("addParam from nonvoter should fail", async function () {
       param = params[0];
       await expect(gp.connect(nonvoter).addParam(param.id, param.name, false, param.before))
         .to.be.revertedWith(PERMISSION_DENIED);
     });
 
-    it("addParam for empty name should fail", async function () {
+    it("addParam of empty name should fail", async function () {
       param = params[0];
       await expect(gp.addParam(param.id, ethers.utils.formatBytes32String(""), false, param.before))
         .to.be.revertedWith(EMPTYNAME_DENIED);
     });
 
-    it("addParam for existing param should fail", async function () {
+    it("addParam of existing param should fail", async function () {
       param = params[0];
       await gp.addParam(param.id, param.name, false, param.before);
       await expect(gp.addParam(param.id, param.name, false, param.before))
@@ -171,20 +171,20 @@ describe("GovParam", function () {
         .to.be.revertedWith(PERMISSION_DENIED);
     });
 
-    it("setParam for nonvoter should fail", async function () {
+    it("setParam from nonvoter should fail", async function () {
       param = params[0];
       await expect(gp.connect(nonvoter).setParam(param.id, param.after, 10000))
         .to.be.revertedWith(PERMISSION_DENIED);
     });
 
-    it("setParam for nonexistent id should fail", async function () {
+    it("setParam of nonexistent id should fail", async function () {
       param = params[0];
       now = await getnow();
       await expect(gp.setParam(100, param.after, now + 10000))
         .to.be.revertedWith(NO_PARAM);
     });
 
-    it("setParam for existing pending change should fail", async function () {
+    it("setParam of existing pending change should fail", async function () {
       param = params[0];
       await gp.addParam(param.id, param.name, param.votable, param.before);
 
@@ -194,7 +194,7 @@ describe("GovParam", function () {
         .to.be.revertedWith(ALREADY_PENDING);
     });
     
-    it("setParam for past block should fail", async function () {
+    it("setParam of past block should fail", async function () {
       param = params[0];
       await gp.addParam(param.id, param.name, param.votable, param.before);
 
@@ -335,7 +335,7 @@ describe("GovParam", function () {
         .to.be.revertedWith(NO_VAL);
     });
 
-    it("removeValidator from voter should succeed when votable", async function () {
+    it("removeValidator from voteContract should succeed when votable", async function () {
       await gp.setVoteContract(voteContract.address);
       await gp.setUpdateValsVotable(true);
       await gp.addValidator(addrs[0]);
@@ -347,7 +347,7 @@ describe("GovParam", function () {
       expect(v).to.deep.equal([addrs[0]]);
     });
 
-    it("removeValidator from voter should fail when not votable", async function () {
+    it("removeValidator from voteContract should fail when not votable", async function () {
       await gp.setVoteContract(voteContract.address);
       await gp.setUpdateValsVotable(false);
       await gp.addValidator(addrs[0]);
