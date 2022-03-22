@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const _ = require("lodash");
 
 function encode(data) {
   let buf;
@@ -180,9 +181,43 @@ describe("addValidator", function () {
   it("addValidator success", async function () {
     const accounts = await hre.ethers.getSigners();
     for (addr of accounts) {
-      gp.addValidator(addr.address);
+      await gp.addValidator(addr.address);
     }
     v = await gp.getValidators();
     expect(v.length).to.equal(accounts.length);
+  });
+});
+
+function removeValidator(arr, addr) {
+  idx = arr.indexOf(addr);
+  elem = arr.pop();
+  arr[idx] = elem;
+  return arr;
+}
+
+describe("removeValidator", function () {
+  let gp;
+
+  beforeEach(async function () {
+    const accounts = await hre.ethers.getSigners();
+    const GovParam = await ethers.getContractFactory("GovParam");
+    gp = await GovParam.deploy(accounts[1].address);
+    await gp.deployed();
+  });
+
+  it("removeValidator success", async function () {
+    var accounts = await hre.ethers.getSigners();
+    var var_accounts = await hre.ethers.getSigners();
+    accounts = _.map(accounts, 'address');
+    var_accounts = _.map(var_accounts, 'address');
+    for (addr of accounts) {
+      gp.addValidator(addr);
+    }
+    for (addr of [accounts[0], accounts[3], accounts[11]]) {
+      await gp.removeValidator(addr);
+      var_accounts = removeValidator(var_accounts, addr);
+      v = await gp.getValidators();
+      expect(v).to.deep.equal(var_accounts);
+    }
   });
 });

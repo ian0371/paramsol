@@ -90,9 +90,20 @@ contract GovParam is Ownable {
         return (cnt, c);
     }
 
-    function addValidator(address v) public returns (bool) {
+    function addValidator(address v) public {
         validators.push(v);
         validatorIdx[v] = validators.length;
+    }
+
+    function removeValidator(address v) public {
+        require(validators.length > 1, "removeValidator rejected since otherwise #val will become zero");
+
+        uint idx = validatorIdx[v] - 1;
+        uint len = validators.length;
+        validators[idx] = validators[len-1];
+        validators.pop();
+        validatorIdx[v] = 0;
+        validatorIdx[validators[idx]] = idx + 1;
     }
 
     function getValidators() public view returns (address[] memory) {
