@@ -261,6 +261,7 @@ describe("GovParam", function () {
 
     it("addValidator from voteContract should fail when not votable", async function () {
       await gp.setVoteContract(voteContract.address);
+      await gp.setUpdateValsVotable(false);
       await expect(gp.connect(voteContract).addValidator(addrs[0]))
         .to.be.revertedWith(PERMISSION_DENIED);
     });
@@ -305,6 +306,15 @@ describe("GovParam", function () {
       expect(v).to.deep.equal([addrs[0]]);
     });
 
+    it("removeValidator success - 3", async function () {
+      await gp.addValidator(addrs[0]);
+      await gp.addValidator(addrs[1]);
+      await expect(gp.removeValidator(addrs[0]))
+        .to.emit(gp, 'ValidatorRemoved').withArgs(addrs[0]);
+      v = await gp.getValidators();
+      expect(v).to.deep.equal([addrs[1]]);
+    });
+
     it("removeValidator from nonvoter should fail", async function () {
       await expect(gp.connect(nonvoter).removeValidator(addrs[1]))
         .to.be.revertedWith(PERMISSION_DENIED);
@@ -325,7 +335,6 @@ describe("GovParam", function () {
         .to.be.revertedWith(NO_VAL);
     });
 
-    /*
     it("removeValidator from voter should succeed when votable", async function () {
       await gp.setVoteContract(voteContract.address);
       await gp.setUpdateValsVotable(true);
@@ -334,6 +343,18 @@ describe("GovParam", function () {
 
       await expect(gp.connect(voteContract).removeValidator(addrs[1]))
         .to.emit(gp, 'ValidatorRemoved').withArgs(addrs[1]);
-    });*/
+      v = await gp.getValidators();
+      expect(v).to.deep.equal([addrs[0]]);
+    });
+
+    it("removeValidator from voter should fail when not votable", async function () {
+      await gp.setVoteContract(voteContract.address);
+      await gp.setUpdateValsVotable(false);
+      await gp.addValidator(addrs[0]);
+      await gp.addValidator(addrs[1]);
+
+      await expect(gp.connect(voteContract).removeValidator(addrs[1]))
+        .to.be.revertedWith(PERMISSION_DENIED);
+    });
   });
 });
