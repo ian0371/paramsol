@@ -136,13 +136,16 @@ contract GovParam is Ownable {
         require(validators.length > 1, "at least one validator required");
         require(validatorIdx[v] != 0, "no such validator");
 
-        // bring the last element of validators to the removing index
         uint idx = validatorIdx[v] - 1;
         uint len = validators.length;
-        validators[idx] = validators[len-1];
-        validators.pop();
+
+        // bring the last element of validators to the removing index
+        if (idx != len - 1) {
+            validators[idx] = validators[len-1];
+            validatorIdx[validators[idx]] = idx + 1;
+        }
         validatorIdx[v] = 0;
-        validatorIdx[validators[idx]] = idx + 1;
+        validators.pop();
         emit ValidatorRemoved(v);
     }
 
