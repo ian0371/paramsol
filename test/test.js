@@ -5,6 +5,7 @@ const _ = require("lodash");
 const PERMISSION_DENIED = 'permission denied';
 const EMPTYNAME_DENIED = 'name cannot be empty';
 const EXISTING_PARAM = 'already existing id';
+const NO_PARAM = 'no such parameter';
 
 function encode(data) {
   let buf;
@@ -148,6 +149,12 @@ describe("GovParam", function () {
       param = params[0];
       await expect(gp.connect(nonvoter).setParam(param.id, param.name, 10000))
         .to.be.revertedWith(PERMISSION_DENIED);
+    });
+
+    it("setParam for nonexistent id should fail", async function () {
+      param = params[0];
+      await expect(gp.setParam(100, param.name, 10000))
+        .to.be.revertedWith(NO_PARAM);
     });
   });
 
