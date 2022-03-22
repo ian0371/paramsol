@@ -133,6 +133,7 @@ contract GovParam is Ownable {
     function removeValidator(address v) public {
         require(msg.sender == owner() || (updateValsVotable && msg.sender == voteContract), "permission denied");
         require(validators.length > 1, "at least one validator required");
+        require(validatorIdx[v] != 0, "no such validator");
 
         // bring the last element of validators to the removing index
         uint idx = validatorIdx[v] - 1;
