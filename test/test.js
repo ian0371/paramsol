@@ -79,10 +79,12 @@ for ([i, param] of params.entries()) {
 describe("GovParam", function () {
   let accounts, addrs;
   let gp;
+  let nonvoter;
   
   beforeEach(async function () {
     accounts = await hre.ethers.getSigners();
     addrs = _.map(accounts, 'address');
+    nonvoter = accounts[10];
     const GovParam = await ethers.getContractFactory("GovParam");
     gp = await GovParam.deploy(addrs[0]);
     await gp.deployed();
@@ -108,7 +110,7 @@ describe("GovParam", function () {
 
     it("addParam for nonvoter should fail", async function () {
       param = params[0];
-      await expect(gp.connect(accounts[10]).addParam(param.id, param.name, false, param.before))
+      await expect(gp.connect(nonvoter).addParam(param.id, param.name, false, param.before))
         .to.be.revertedWith(PERMISSION_DENIED);
     });
 
@@ -140,6 +142,12 @@ describe("GovParam", function () {
       await mineMoreBlocks(10000);
       p = await gp.getParam(param.id);
       expect(p).to.equal(param.after);
+    });
+
+    it("setParam for nonvoter should fail", async function () {
+      param = params[0];
+      await expect(gp.connect(nonvoter).setParam(param.id, param.name, 10000))
+        .to.be.revertedWith(PERMISSION_DENIED);
     });
   });
 
