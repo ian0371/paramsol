@@ -6,6 +6,7 @@ const PERMISSION_DENIED = 'permission denied';
 const EMPTYNAME_DENIED = 'name cannot be empty';
 const EXISTING_PARAM = 'already existing id';
 const NO_PARAM = 'no such parameter';
+const ALREADY_PENDING = 'already have a pending change';
 
 function encode(data) {
   let buf;
@@ -147,14 +148,25 @@ describe("GovParam", function () {
 
     it("setParam for nonvoter should fail", async function () {
       param = params[0];
-      await expect(gp.connect(nonvoter).setParam(param.id, param.name, 10000))
+      await expect(gp.connect(nonvoter).setParam(param.id, param.after, 10000))
         .to.be.revertedWith(PERMISSION_DENIED);
     });
 
     it("setParam for nonexistent id should fail", async function () {
       param = params[0];
-      await expect(gp.setParam(100, param.name, 10000))
+      now = await getnow();
+      await expect(gp.setParam(100, param.after, now + 10000))
         .to.be.revertedWith(NO_PARAM);
+    });
+
+    it("setParam for existing pending change should fail", async function () {
+      param = params[0];
+      await gp.addParam(param.id, param.name, param.votable, param.before);
+
+      now = await getnow();
+      await gp.setParam(param.id, param.after, now + 10000);
+      await expect(gp.setParam(param.id, param.after, now + 10000))
+        .to.be.revertedWith(ALREADY_PENDING);
     });
   });
 
