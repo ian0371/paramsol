@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract GovParam is Ownable {
     address private voteContract;
-    bool private votable;
+    bool private updateValsVotable;
     mapping(uint => Param) private params;
     uint[] private paramIds;
 
@@ -56,10 +56,10 @@ contract GovParam is Ownable {
         emit VoteContractUpdated(voteContract);
     }
 
-    function setVotable(bool flag) external
+    function setUpdateValsVotable(bool flag) external
     onlyOwner {
-        votable = flag;
-        emit VotableUpdated(votable);
+        updateValsVotable = flag;
+        emit VotableUpdated(updateValsVotable);
     }
 
     function addParam(uint id, bytes32 _name, bool _votable, bytes32 value) public
@@ -78,7 +78,7 @@ contract GovParam is Ownable {
     function setParamVotable(uint id, bool flag) external
     onlyOwner {
         params[id].votable = flag;
-        emit ParamVotableUpdated(id, votable);
+        emit ParamVotableUpdated(id, params[id].votable);
     }
 
     function setParam(uint id, bytes32 value, uint64 _fromBlock) public 
@@ -124,14 +124,14 @@ contract GovParam is Ownable {
     }
 
     function addValidator(address v) public {
-        require(msg.sender == owner() || (votable && msg.sender == voteContract), "permission denied");
+        require(msg.sender == owner() || (updateValsVotable && msg.sender == voteContract), "permission denied");
         validators.push(v);
         validatorIdx[v] = validators.length;
         emit ValidatorAdded(v);
     }
 
     function removeValidator(address v) public {
-        require(msg.sender == owner() || (votable && msg.sender == voteContract), "permission denied");
+        require(msg.sender == owner() || (updateValsVotable && msg.sender == voteContract), "permission denied");
         require(validators.length > 1, "at least one validator required");
 
         // bring the last element of validators to the removing index
