@@ -40,37 +40,37 @@ async function mineMoreBlocks(num) {
 
 params = [{
   name:    ethers.utils.formatBytes32String("istanbul.epoch"),
-  votable: false,
+  votable: true,
   before:  encode(604800),
   after:   encode(86400),
 }, {
   name:    ethers.utils.formatBytes32String("governance.unitprice"),
-  votable: false,
+  votable: true,
   before:  encode('25000000000'),
   after:   encode('750000000000'),
 }, {
   name:    ethers.utils.formatBytes32String("reward.ratio"),
-  votable: false,
+  votable: true,
   before:  encode('34/54/12'),
   after:   encode('20/30/50'),
 }, {
   name:    ethers.utils.formatBytes32String("governance.governancemode"),
-  votable: false,
+  votable: true,
   before:  encode('single'),
   after:   encode('ballot'),
 }, {
   name:    ethers.utils.formatBytes32String("governance.governingnode"),
-  votable: false,
+  votable: true,
   before:  encode('0x52d41ca72af615a1ac3301b0a93efa222ecc7541'),
   after:   encode('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
 }, {
   name:    ethers.utils.formatBytes32String("reward.deferredtxfee"),
-  votable: false,
+  votable: true,
   before:  encode('true'),
   after:   encode('false'),
 }, {
   name:    ethers.utils.formatBytes32String("reward.mintingamount"),
-  votable: false,
+  votable: true,
   before:  encode('9600000000000000000'),
   after:   encode('12000000000000000000'),
 }];
@@ -82,11 +82,12 @@ for ([i, param] of params.entries()) {
 describe("GovParam", function () {
   let accounts, addrs;
   let gp;
-  let nonvoter;
+  let voteContract, nonvoter;
   
   beforeEach(async function () {
     accounts = await hre.ethers.getSigners();
     addrs = _.map(accounts, 'address');
+    voteContract = accounts[1];
     nonvoter = accounts[10];
     const GovParam = await ethers.getContractFactory("GovParam");
     gp = await GovParam.deploy(addrs[0]);
@@ -145,6 +146,26 @@ describe("GovParam", function () {
       await mineMoreBlocks(10000);
       p = await gp.getParam(param.id);
       expect(p).to.equal(param.after);
+    });
+    
+    it("setParam from voteContract should succeed when votable", async function () {
+      param = params[0];
+      await gp.setVoteContract(voteContract.address);
+      await gp.addParam(param.id, param.name, param.votable, param.before);
+
+      now = await getnow();
+      expect(await gp.connect(voteContract).setParam(param.id, param.after, now + 100))
+        .to.emit(gp, 'SetParam').withArgs(param.id, param.name, param.after, now + 100);
+    });
+
+    it("setParam from voteContract should fail when not votable", async function () {
+      param = params[0];
+      await gp.setVoteContract(voteContract.address);
+      await gp.addParam(param.id, param.name, false, param.before);
+
+      now = await getnow();
+      await expect(gp.connect(voteContract).setParam(param.id, param.after, now + 100))
+        .to.be.revertedWith(PERMISSION_DENIED);
     });
 
     it("setParam for nonvoter should fail", async function () {

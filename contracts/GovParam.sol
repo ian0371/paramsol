@@ -45,8 +45,8 @@ contract GovParam is Ownable {
         }
     }
 
-    modifier onlyVotable() {
-        require(msg.sender == owner() || (votable && msg.sender == voteContract), "permission denied");
+    modifier onlyVotable(uint idx) {
+        require(msg.sender == owner() || (params[idx].votable && msg.sender == voteContract), "permission denied");
         _;
     }
     
@@ -63,7 +63,7 @@ contract GovParam is Ownable {
     }
 
     function addParam(uint id, bytes32 _name, bool _votable, bytes32 value) public
-    onlyVotable {
+    onlyVotable(id) {
         require(_name != bytes32(0), "name cannot be empty");
         require(params[id].name == bytes32(0), "already existing id");
         params[id] = Param({
@@ -82,7 +82,7 @@ contract GovParam is Ownable {
     }
 
     function setParam(uint id, bytes32 value, uint64 _fromBlock) public 
-    onlyVotable {
+    onlyVotable(id) {
         require(params[id].fromBlock < block.number, "already have a pending change");
         require(block.number < _fromBlock, "cannot set fromBlock to past");
         require(params[id].name != bytes32(0), "no such parameter");
@@ -123,15 +123,15 @@ contract GovParam is Ownable {
         return (cnt, c);
     }
 
-    function addValidator(address v) public
-    onlyVotable {
+    function addValidator(address v) public {
+        require(msg.sender == owner() || (votable && msg.sender == voteContract), "permission denied");
         validators.push(v);
         validatorIdx[v] = validators.length;
         emit ValidatorAdded(v);
     }
 
-    function removeValidator(address v) public
-    onlyVotable {
+    function removeValidator(address v) public {
+        require(msg.sender == owner() || (votable && msg.sender == voteContract), "permission denied");
         require(validators.length > 1, "at least one validator required");
 
         // bring the last element of validators to the removing index
