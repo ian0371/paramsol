@@ -2,7 +2,8 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const _ = require("lodash");
 
-const DENIED = 'permission denied';
+const PERMISSION_DENIED = 'permission denied';
+const EXISTING_PARAM = 'already existing id';
 
 function encode(data) {
   let buf;
@@ -102,6 +103,19 @@ describe("GovParam", function () {
       await gp.addParam(param.id, param.name, false, param.before);
       p = await gp.getParam(0);
       expect(p).to.equal(param.before);
+    });
+
+    it("addParam for nonvoter should fail", async function () {
+      param = params[0];
+      await expect(gp.connect(accounts[10]).addParam(param.id, param.name, false, param.before))
+        .to.be.revertedWith(PERMISSION_DENIED);
+    });
+
+    it("addParam for existing param should fail", async function () {
+      param = params[0];
+      await gp.addParam(param.id, param.name, false, param.before);
+      await expect(gp.addParam(param.id, param.name, false, param.before))
+        .to.be.revertedWith(EXISTING_PARAM);
     });
   });
 
