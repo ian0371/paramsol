@@ -3,6 +3,7 @@ const { ethers } = require("hardhat");
 const _ = require("lodash");
 
 const PERMISSION_DENIED = 'permission denied';
+const EMPTYNAME_DENIED = 'name cannot be empty';
 const EXISTING_PARAM = 'already existing id';
 
 function encode(data) {
@@ -109,6 +110,12 @@ describe("GovParam", function () {
       param = params[0];
       await expect(gp.connect(accounts[10]).addParam(param.id, param.name, false, param.before))
         .to.be.revertedWith(PERMISSION_DENIED);
+    });
+
+    it("addParam for empty name should fail", async function () {
+      param = params[0];
+      await expect(gp.addParam(param.id, ethers.utils.formatBytes32String(""), false, param.before))
+        .to.be.revertedWith(EMPTYNAME_DENIED);
     });
 
     it("addParam for existing param should fail", async function () {
