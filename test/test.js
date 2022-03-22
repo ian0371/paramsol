@@ -8,6 +8,8 @@ const EXISTING_PARAM = 'already existing id';
 const NO_PARAM = 'no such parameter';
 const ALREADY_PENDING = 'already have a pending change';
 const ALREADY_PAST = 'cannot set fromBlock to past';
+const ONE_VAL_REQUIRED = 'at least one validator required';
+const NO_VAL = 'no such validator';
 
 function encode(data) {
   let buf;
@@ -263,26 +265,48 @@ describe("GovParam", function () {
     });
   });
 
-  function removeValidator(arr, addr) {
-    idx = arr.indexOf(addr);
-    elem = arr.pop();
-    arr[idx] = elem;
-    return arr;
-  }
-
   describe("removeValidator", function () {
+    function expectedRemoveValidator(arr, addr) {
+      idx = arr.indexOf(addr);
+      elem = arr.pop();
+      arr[idx] = elem;
+      return arr;
+    }
+
     it("removeValidator success", async function () {
       var var_accounts = await hre.ethers.getSigners();
       var_accounts = _.map(var_accounts, 'address');
+
       for (addr of addrs) {
-        gp.addValidator(addr);
+        await gp.addValidator(addr);
       }
+
       for (addr of [addrs[0], addrs[3], addrs[11]]) {
         await gp.removeValidator(addr);
-        var_accounts = removeValidator(var_accounts, addr);
+        var_accounts = expectedRemoveValidator(var_accounts, addr);
         v = await gp.getValidators();
         expect(v).to.deep.equal(var_accounts);
       }
+    });
+
+    it("removeValidator from nonvoter should fail", async function () {
+      await expect(gp.connect(nonvoter).removeValidator(addrs[1]))
+        .to.be.revertedWith(PERMISSION_DENIED);
+    });
+
+    it("removeValidator should fail for removing the last validator", async function () {
+      await gp.addValidator(addrs[0]);
+
+      await expect(gp.removeValidator(addrs[0]))
+        .to.be.revertedWith(ONE_VAL_REQUIRED);
+    });
+
+    it("removeValidator should fail for nonexistent address", async function () {
+      await gp.addValidator(addrs[0]);
+      await gp.addValidator(addrs[1]);
+
+      await expect(gp.removeValidator(addrs[2]))
+        .to.be.revertedWith(NO_VAL);
     });
   });
 });
