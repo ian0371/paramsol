@@ -5,15 +5,16 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract GovParam is Ownable {
-    address public voteContract;
-    mapping(uint => Param) public params;
-    uint[] public paramIds;
+    address private voteContract;
+    bool private votable;
+    mapping(uint => Param) private params;
+    uint[] private paramIds;
 
-    address[] validators;
+    address[] private validators;
 
     // For quick lookup and array manipulation
     // 0: not validator, n: stored at validator[n-1]
-    mapping(address => uint) validatorIdx; 
+    mapping(address => uint) private validatorIdx; 
 
     struct Param {
         bytes32 name;      // ex) "istanbul.epoch"
@@ -30,7 +31,12 @@ contract GovParam is Ownable {
         bytes32 value;
     }
 
+    event VoteContractUpdated(address);
+    event VotableUpdated(bool);
+    event ParamVotableUpdated(uint, bool);
     event SetParam(uint, bytes32, bytes32, uint64);
+    event ValidatorAdded(address);
+    event ValidatorRemoved(address);
 
     constructor(address _owner) {
         if (_owner != address(0)) {
@@ -39,7 +45,26 @@ contract GovParam is Ownable {
         }
     }
 
-    function addParam(uint id, bytes32 _name, bool _votable, bytes32 value) public {
+    modifier onlyVotable() {
+        require(msg.sender == owner() || (votable && msg.sender == voteContract), "permission denied");
+        _;
+    }
+    
+    function setVoteContract(address v) external
+    onlyOwner {
+        voteContract = v;
+        emit VoteContractUpdated(voteContract);
+    }
+
+    function setVotable(bool flag) external
+    onlyOwner {
+        votable = flag;
+        emit VotableUpdated(votable);
+    }
+
+    function addParam(uint id, bytes32 _name, bool _votable, bytes32 value) public
+    onlyVotable {
+        require(_name != bytes32(0), "name cannot be empty");
         require(params[id].name == bytes32(0), "already existing id");
         params[id] = Param({
             name: _name,
@@ -50,7 +75,14 @@ contract GovParam is Ownable {
         });
     }
 
-    function setParam(uint id, bytes32 value, uint64 _fromBlock) public {
+    function setParamVotable(uint id, bool flag) external
+    onlyOwner {
+        params[id].votable = flag;
+        emit ParamVotableUpdated(id, votable);
+    }
+
+    function setParam(uint id, bytes32 value, uint64 _fromBlock) public 
+    onlyVotable {
         require(params[id].fromBlock < block.number, "already have a pending change");
         require(params[id].name != bytes32(0), "no such parameter");
 
@@ -90,20 +122,25 @@ contract GovParam is Ownable {
         return (cnt, c);
     }
 
-    function addValidator(address v) public {
+    function addValidator(address v) public
+    onlyVotable {
         validators.push(v);
         validatorIdx[v] = validators.length;
+        emit ValidatorAdded(v);
     }
 
-    function removeValidator(address v) public {
-        require(validators.length > 1, "removeValidator rejected since otherwise #val will become zero");
+    function removeValidator(address v) public
+    onlyVotable {
+        require(validators.length > 1, "at least one validator required");
 
+        // bring the last element of validators to the removing index
         uint idx = validatorIdx[v] - 1;
         uint len = validators.length;
         validators[idx] = validators[len-1];
         validators.pop();
         validatorIdx[v] = 0;
         validatorIdx[validators[idx]] = idx + 1;
+        emit ValidatorRemoved(v);
     }
 
     function getValidators() public view returns (address[] memory) {
