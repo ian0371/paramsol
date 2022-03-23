@@ -14,7 +14,7 @@ const NO_VAL = 'no such validator';
 
 function encode(data) {
   let buf;
-  if (typeof data == 'string') {
+  if (typeof data === 'string') {
     if (data.startsWith('0x')) { // if data is address
       buf = Buffer.from(data.slice(2), 'hex');
     }
@@ -22,15 +22,14 @@ function encode(data) {
       buf = Buffer.from(data);
     }
   }
-  else if (typeof data == 'number') {
+  else if (typeof data === 'number') {
     buf = ethers.utils.hexlify(data);
   }
-  else if (typeof data == 'boolean') {
+  else if (typeof data === 'boolean') {
     buf = ethers.utils.hexlify(+data); // true->1, false->0
   }
   else {
-    console.log("unsupported data type:", typeof data, data);
-    process.exit(1);
+    throw new Error(`unsupported data type: ${typeof data}, ${data}`);
   }
   return ethers.utils.RLP.encode(buf);
 }
@@ -104,8 +103,8 @@ describe("GovParam", function () {
 
   describe("constructor", function () {
     it("Constructor success", async function () {
-      let GovParam = await ethers.getContractFactory("GovParam");
-      let gp = await GovParam.deploy(addrs[1]);
+      const GovParam = await ethers.getContractFactory("GovParam");
+      const gp = await GovParam.deploy(addrs[1]);
       await gp.deployed();
 
       expect(await gp.owner()).to.equal(addrs[1]);
@@ -296,8 +295,8 @@ describe("GovParam", function () {
     }
 
     it("removeValidator success", async function () {
-      var var_accounts = await hre.ethers.getSigners();
-      var_accounts = _.map(var_accounts, 'address');
+      let expectedAccounts = await hre.ethers.getSigners();
+      expectedAccounts = _.map(expectedAccounts, 'address');
 
       for (addr of addrs) {
         await gp.addValidator(addr);
@@ -305,9 +304,9 @@ describe("GovParam", function () {
 
       for (addr of [addrs[0], addrs[3], addrs[11]]) {
         await gp.removeValidator(addr);
-        var_accounts = expectedRemoveValidator(var_accounts, addr);
+        expectedAccounts = expectedRemoveValidator(expectedAccounts, addr);
         v = await gp.getValidators();
-        expect(v).to.deep.equal(var_accounts);
+        expect(v).to.deep.equal(expectedAccounts);
       }
     });
 
