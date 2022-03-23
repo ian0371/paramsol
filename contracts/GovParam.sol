@@ -17,24 +17,24 @@ contract GovParam is Ownable {
     mapping(address => uint) private validatorIdx; 
 
     struct Param {
-        bytes32 name;      // ex) "istanbul.epoch"
-        bool    votable;   // true: owner&voter can change, false: only owner
-        uint64  fromBlock; // block number for last change
-        bytes32 prevValue; // RLP encoded value before nextBlock
-        bytes32 nextValue; // RLP encoded value after nextBlock
+        string name;      // ex) "istanbul.epoch"
+        bool   votable;   // true: owner&voter can change, false: only owner
+        uint64 fromBlock; // block number for last change
+        bytes  prevValue; // RLP encoded value before nextBlock
+        bytes  nextValue; // RLP encoded value after nextBlock
     }
 
     // only for scheduledChanges()
     struct Changes {
-        bytes32 name;
-        uint64  blocknum;
-        bytes32 value;
+        string name;
+        uint64 blocknum;
+        bytes  value;
     }
 
     event VoteContractUpdated(address);
     event VotableUpdated(bool);
     event ParamVotableUpdated(uint, bool);
-    event SetParam(uint, bytes32, bytes32, uint64);
+    event SetParam(uint, string, bytes, uint64);
     event ValidatorAdded(address);
     event ValidatorRemoved(address);
 
@@ -62,10 +62,10 @@ contract GovParam is Ownable {
         emit VotableUpdated(updateValsVotable);
     }
 
-    function addParam(uint id, bytes32 _name, bool _votable, bytes32 value) public
+    function addParam(uint id, string calldata _name, bool _votable, bytes calldata value) public
     onlyVotable(id) {
-        require(_name != bytes32(0), "name cannot be empty");
-        require(params[id].name == bytes32(0), "already existing id");
+        require(bytes(_name).length > 0, "name cannot be empty");
+        require(bytes(params[id].name).length == 0, "already existing id");
         params[id] = Param({
             name: _name,
             votable: _votable,
@@ -81,11 +81,11 @@ contract GovParam is Ownable {
         emit ParamVotableUpdated(id, params[id].votable);
     }
 
-    function setParam(uint id, bytes32 value, uint64 _fromBlock) public 
+    function setParam(uint id, bytes calldata value, uint64 _fromBlock) public 
     onlyVotable(id) {
         require(params[id].fromBlock < block.number, "already have a pending change");
         require(block.number < _fromBlock, "cannot set fromBlock to past");
-        require(params[id].name != bytes32(0), "no such parameter");
+        require(bytes(params[id].name).length > 0, "no such parameter");
 
         params[id].prevValue = params[id].nextValue;
         params[id].fromBlock = _fromBlock;
@@ -96,7 +96,7 @@ contract GovParam is Ownable {
         emit SetParam(id, params[id].name, value, _fromBlock);
     }
 
-    function getParam(uint id) external view returns (bytes32) {
+    function getParam(uint id) external view returns (bytes memory) {
         if (block.number >= params[id].fromBlock) {
             return params[id].nextValue;
         }

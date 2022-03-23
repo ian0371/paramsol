@@ -25,11 +25,14 @@ function encode(data) {
   else if (typeof data == 'number') {
     buf = ethers.utils.hexlify(data);
   }
+  else if (typeof data == 'boolean') {
+    buf = ethers.utils.hexlify(+data); // true->1, false->0
+  }
   else {
     console.log("unsupported data type:", typeof data, data);
     process.exit(1);
   }
-  return ethers.utils.RLP.encode(buf).padEnd(66, '0');
+  return ethers.utils.RLP.encode(buf);
 }
 
 async function getnow() {
@@ -42,37 +45,37 @@ async function mineMoreBlocks(num) {
 }
 
 params = [{
-  name:    ethers.utils.formatBytes32String("istanbul.epoch"),
+  name:    "istanbul.epoch",
   votable: true,
   before:  encode(604800),
   after:   encode(86400),
 }, {
-  name:    ethers.utils.formatBytes32String("governance.unitprice"),
+  name:    "governance.unitprice",
   votable: true,
   before:  encode('25000000000'),
   after:   encode('750000000000'),
 }, {
-  name:    ethers.utils.formatBytes32String("reward.ratio"),
+  name:    "reward.ratio",
   votable: true,
   before:  encode('34/54/12'),
   after:   encode('20/30/50'),
 }, {
-  name:    ethers.utils.formatBytes32String("governance.governancemode"),
+  name:    "governance.governancemode",
   votable: true,
   before:  encode('single'),
   after:   encode('ballot'),
 }, {
-  name:    ethers.utils.formatBytes32String("governance.governingnode"),
+  name:    "governance.governingnode",
   votable: true,
   before:  encode('0x52d41ca72af615a1ac3301b0a93efa222ecc7541'),
   after:   encode('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
 }, {
-  name:    ethers.utils.formatBytes32String("reward.deferredtxfee"),
+  name:    "reward.deferredtxfee",
   votable: true,
   before:  encode('true'),
   after:   encode('false'),
 }, {
-  name:    ethers.utils.formatBytes32String("reward.mintingamount"),
+  name:    "reward.mintingamount",
   votable: true,
   before:  encode('9600000000000000000'),
   after:   encode('12000000000000000000'),
@@ -123,7 +126,7 @@ describe("GovParam", function () {
 
     it("addParam of empty name should fail", async function () {
       param = params[0];
-      await expect(gp.addParam(param.id, ethers.utils.formatBytes32String(""), false, param.before))
+      await expect(gp.addParam(param.id, "", false, param.before))
         .to.be.revertedWith(EMPTYNAME_DENIED);
     });
 
