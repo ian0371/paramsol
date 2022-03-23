@@ -42,6 +42,8 @@ async function getnow() {
 async function mineMoreBlocks(num) {
   mineblock = '0x' + num.toString(16);
   await hre.network.provider.send("hardhat_mine", [mineblock]);
+  // due to bug, the next line is required (https://github.com/NomicFoundation/hardhat/issues/2467)
+  await hre.network.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);
 }
 
 params = [{
@@ -204,6 +206,15 @@ describe("GovParam", function () {
       now = await getnow();
       await expect(gp.setParam(param.id, param.after, now - 50))
         .to.be.revertedWith(ALREADY_PAST);
+    });
+  });
+
+  describe("setParamVotable", function () {
+    it("setParam success", async function () {
+      param = params[0];
+      await gp.addParam(param.id, param.name, param.votable, param.before);
+      await gp.setParamVotable(param.id, true);
+      await gp.setParamVotable(param.id, false);
     });
   });
 
