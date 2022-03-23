@@ -24,6 +24,12 @@ contract GovParam is Ownable {
         bytes  nextValue; // RLP encoded value after nextBlock
     }
 
+    // only for getAllParams()
+    struct ParamView {
+        string name;
+        bytes  value;
+    }
+
     // only for scheduledChanges()
     struct Changes {
         string name;
@@ -73,6 +79,8 @@ contract GovParam is Ownable {
             prevValue: "",  // unused
             nextValue: value
         });
+
+        paramIds.push(id);
     }
 
     function setParamVotable(uint id, bool flag) external
@@ -91,18 +99,30 @@ contract GovParam is Ownable {
         params[id].fromBlock = _fromBlock;
         params[id].nextValue = value;
 
-        paramIds.push(id);
-
         emit SetParam(id, params[id].name, value, _fromBlock);
     }
 
-    function getParam(uint id) external view returns (bytes memory) {
+    function getParam(uint id) public view returns (bytes memory) {
         if (block.number >= params[id].fromBlock) {
             return params[id].nextValue;
         }
         else {
             return params[id].prevValue;
         }
+    }
+
+    function getAllParams() external view returns (ParamView[] memory) {
+        ParamView[] memory ret = new ParamView[](paramIds.length);
+        for (uint i = 0; i < paramIds.length; i++) {
+            Param memory p = params[paramIds[i]];
+            bytes memory value = getParam(paramIds[i]);
+            ParamView memory pv = ParamView({
+                name: p.name,
+                value: value
+            });
+            ret[i] = pv;
+        }
+        return ret;
     }
 
     function scheduledChanges() external view returns (uint n, Changes[] memory) {
