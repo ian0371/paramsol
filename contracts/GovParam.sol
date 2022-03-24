@@ -14,7 +14,7 @@ contract GovParam is Ownable {
 
     // For quick lookup and array manipulation
     // 0: not validator, n: stored at validator[n-1]
-    mapping(address => uint) private validatorIdx; 
+    mapping(address => uint) private validatorIdx;
 
     struct Param {
         string name;      // ex) "istanbul.epoch"
@@ -55,7 +55,7 @@ contract GovParam is Ownable {
         require(msg.sender == owner() || (params[idx].votable && msg.sender == voteContract), "permission denied");
         _;
     }
-    
+
     function setVoteContract(address v) external
     onlyOwner {
         voteContract = v;
@@ -89,7 +89,7 @@ contract GovParam is Ownable {
         emit ParamVotableUpdated(id, params[id].votable);
     }
 
-    function setParam(uint id, bytes calldata value, uint64 _fromBlock) public 
+    function setParam(uint id, bytes calldata value, uint64 _fromBlock) public
     onlyVotable(id) {
         require(params[id].fromBlock < block.number, "already have a pending change");
         require(block.number < _fromBlock, "cannot set fromBlock to past");
