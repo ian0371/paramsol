@@ -12,6 +12,10 @@ const ONE_VAL_REQUIRED = 'at least one validator required';
 const VAL_ALREADY_EXIST = 'validator already exists';
 const NO_VAL = 'no such validator';
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function encode(data) {
   let buf;
   if (typeof data === 'string') {
@@ -31,7 +35,8 @@ function encode(data) {
   else {
     throw new Error(`unsupported data type: ${typeof data}, ${data}`);
   }
-  return ethers.utils.RLP.encode(buf);
+  //return ethers.utils.RLP.encode(buf);
+  return buf;
 }
 
 async function getnow() {
@@ -90,7 +95,7 @@ describe("GovParam", function () {
   let accounts, addrs;
   let gp;
   let voteContract, nonvoter;
-  
+
   beforeEach(async function () {
     accounts = await hre.ethers.getSigners();
     addrs = _.map(accounts, 'address');
@@ -114,7 +119,8 @@ describe("GovParam", function () {
   describe("addParam", function () {
     it("addParam success", async function () {
       param = params[0];
-      await gp.addParam(param.id, param.name, false, param.before);
+      p = await gp.addParam(param.id, param.name, false, param.before);
+      await sleep(2000);
       p = await gp.getParam(0);
       expect(p).to.equal(param.before);
     });
@@ -155,7 +161,7 @@ describe("GovParam", function () {
       expect(await gp.getParam(param.id))
         .to.equal(param.after);
     });
-    
+
     it("setParam from voteContract should succeed when votable", async function () {
       param = params[0];
       await gp.setVoteContract(voteContract.address);
@@ -198,7 +204,7 @@ describe("GovParam", function () {
       await expect(gp.setParam(param.id, param.after, now + 10000))
         .to.be.revertedWith(ALREADY_PENDING);
     });
-    
+
     it("setParam of past block should fail", async function () {
       param = params[0];
       await gp.addParam(param.id, param.name, param.votable, param.before);

@@ -14,7 +14,7 @@ contract GovParam is Ownable {
 
     // For quick lookup and array manipulation
     // 0: not validator, n: stored at validator[n-1]
-    mapping(address => uint) private validatorIdx; 
+    mapping(address => uint) private validatorIdx;
 
     struct Param {
         string name;      // ex) "istanbul.epoch"
@@ -45,9 +45,23 @@ contract GovParam is Ownable {
     event ValidatorRemoved(address);
 
     constructor(address _owner) {
+        addParam(0, "governance.governancemode", false, "single");
+        addParam(1, "governance.governingnode", false, "0x52d41ca72af615a1ac3301b0a93efa222ecc7541");
+        addParam(2, "istanbul.epoch", false, "0x093a80");
+        addParam(3, "istanbul.policy", false, "0x00");
+        addParam(4, "istanbul.committeesize", false, "0x01");
+        addParam(5, "governance.unitprice", false, "0x05d21dba00");
+        addParam(6, "reward.mintingamount", false, "9000000000000000000000000000000000000");
+        addParam(7, "reward.ratio", false, "34/54/12");
+        addParam(8, "reward.useginicoeff", false, "0x01");
+        addParam(9, "reward.deferredtxfee", false, "0x01");
+        addParam(10, "reward.minimumstake", false, "5000000");
+        addParam(11, "reward.stakingupdateinterval", false, "0x015180");
+        addParam(12, "reward.proposerupdateinterval", false, "0x0e10");
+
         if (_owner != address(0)) {
             console.log("Transferring ownership to", _owner);
-            transferOwnership(_owner);
+            _transferOwnership(_owner);
         }
     }
 
@@ -55,7 +69,7 @@ contract GovParam is Ownable {
         require(msg.sender == owner() || (params[idx].votable && msg.sender == voteContract), "permission denied");
         _;
     }
-    
+
     function setVoteContract(address v) external
     onlyOwner {
         voteContract = v;
@@ -68,8 +82,8 @@ contract GovParam is Ownable {
         emit VotableUpdated(updateValsVotable);
     }
 
-    function addParam(uint id, string calldata _name, bool _votable, bytes calldata value) public
-    onlyVotable(id) {
+    function addParam(uint id, string memory _name, bool _votable, bytes memory value) public
+    onlyOwner {
         require(bytes(_name).length > 0, "name cannot be empty");
         require(bytes(params[id].name).length == 0, "already existing id");
         params[id] = Param({
@@ -89,7 +103,7 @@ contract GovParam is Ownable {
         emit ParamVotableUpdated(id, params[id].votable);
     }
 
-    function setParam(uint id, bytes calldata value, uint64 _fromBlock) public 
+    function setParam(uint id, bytes calldata value, uint64 _fromBlock) public
     onlyVotable(id) {
         require(params[id].fromBlock < block.number, "already have a pending change");
         require(block.number < _fromBlock, "cannot set fromBlock to past");
@@ -130,7 +144,7 @@ contract GovParam is Ownable {
         uint cnt = 0;
         for (uint i = 0; i < paramIds.length; i++) {
             Param memory p = params[paramIds[i]];
-            if (p.fromBlock > block.number) {
+            if (p.fromBlock >= block.number) {
                 Changes memory _c = Changes({
                     name: p.name,
                     blocknum: p.fromBlock,
@@ -149,6 +163,10 @@ contract GovParam is Ownable {
         validators.push(v);
         validatorIdx[v] = validators.length;
         emit ValidatorAdded(v);
+    }
+
+    function getVoteContract() external view returns (address) {
+        return voteContract;
     }
 
     function removeValidator(address v) public {
