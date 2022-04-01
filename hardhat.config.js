@@ -108,13 +108,13 @@ task("send", "Send a tx with gas price 25 ston")
 
 task("bal", "get balances", async (taskArgs, hre) => {
   bal = await ethers.provider.getBalance('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
-  console.log('0xaaaa:', bal);
+  console.log('0xaaaa...:', bal);
   bal = await ethers.provider.getBalance('0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb');
-  console.log('0xbbbb:', bal);
+  console.log('0xbbbb...:', bal);
   bal = await ethers.provider.getBalance('0xcccccccccccccccccccccccccccccccccccccccc');
-  console.log('0xcccc:', bal);
+  console.log('0xcccc...:', bal);
   bal = await ethers.provider.getBalance('0xdddddddddddddddddddddddddddddddddddddddd');
-  console.log('0xdddd:', bal);
+  console.log('0xdddd...:', bal);
 });
 
 // You need to export an object to set up your config
