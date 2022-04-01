@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const _ = require("lodash");
 
+const NOT_OWNER = 'Ownable: caller is not the owner';
 const PERMISSION_DENIED = 'permission denied';
 const EMPTYNAME_DENIED = 'name cannot be empty';
 const EXISTING_PARAM = 'already existing id';
@@ -16,28 +17,21 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function encode(data) {
-  let buf;
-  if (typeof data === 'string') {
-    if (data.startsWith('0x')) { // if data is address
-      buf = Buffer.from(data.slice(2), 'hex');
-    }
-    else {
-      buf = Buffer.from(data);
-    }
-  }
-  else if (typeof data === 'number') {
-    buf = ethers.utils.hexlify(data);
-  }
-  else if (typeof data === 'boolean') {
-    buf = ethers.utils.hexlify(+data); // true->1, false->0
-  }
-  else {
-    throw new Error(`unsupported data type: ${typeof data}, ${data}`);
-  }
-  //return ethers.utils.RLP.encode(buf);
-  return buf;
-}
+params = [
+  {id: 0,  name: "governance.governancemode",     votable: false, before: /* single */"0x73696e676c65",                           after: /* ballot */"0x62616c6c6f74"},
+  {id: 1,  name: "governance.governingnode",      votable: false, before: "0x52d41ca72af615a1ac3301b0a93efa222ecc7541",           after: "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+  {id: 2,  name: "istanbul.epoch",                votable: false, before: /* 604800 */"0x093a80",                                 after: /* 86400 */ "0x015180"},
+  {id: 3,  name: "istanbul.policy",               votable: false, before: "0x00",                                                 after: "0x01"},
+  {id: 4,  name: "istanbul.committeesize",        votable: false, before: "0x01",                                                 after: "0x10"},
+  {id: 5,  name: "governance.unitprice",          votable: false, before: /* 25 ston */"0x05d21dba00",                            after: /* 750 ston */"0xae9f7bcc00"},
+  {id: 6,  name: "reward.mintingamount",          votable: false, before: /* 9 klay */"0x39303030303030303030303030303030303030", after: /* 4 klay */"0x34303030303030303030303030303030303030"},
+  {id: 7,  name: "reward.ratio",                  votable: false, before: /* 34/54/12  */"0x33342f35342f3132",                    after: /*25/25/50*/"0x32352f32352f3530"},
+  {id: 8,  name: "reward.useginicoeff",           votable: false, before: /* true */"0x01",                                       after: /* false */ "0x00"},
+  {id: 9,  name: "reward.deferredtxfee",          votable: false, before: /* true */"0x01",                                       after: /* false */ "0x00"},
+  {id: 10, name: "reward.minimumstake",           votable: false, before: /* 5 million */"0x4c4b40",                              after: /* 7 million */"0x6acfc0"},
+  {id: 11, name: "reward.stakingupdateinterval",  votable: false, before: /* 86400 */"0x015180",                                  after: /* 3600 */"0x0e10"},
+  {id: 12, name: "reward.proposerupdateinterval", votable: false, before: /* 3600 */"0x0e10",                                     after: /* 60 */"0x3c"},
+];
 
 async function getnow() {
   return parseInt(await hre.network.provider.send("eth_blockNumber"));
@@ -50,47 +44,6 @@ async function mineMoreBlocks(num) {
   await hre.network.provider.send('hardhat_setNextBlockBaseFeePerGas', ['0x0']);
 }
 
-params = [{
-  name:    "istanbul.epoch",
-  votable: true,
-  before:  encode(604800),
-  after:   encode(86400),
-}, {
-  name:    "governance.unitprice",
-  votable: true,
-  before:  encode('25000000000'),
-  after:   encode('750000000000'),
-}, {
-  name:    "reward.ratio",
-  votable: true,
-  before:  encode('34/54/12'),
-  after:   encode('20/30/50'),
-}, {
-  name:    "governance.governancemode",
-  votable: true,
-  before:  encode('single'),
-  after:   encode('ballot'),
-}, {
-  name:    "governance.governingnode",
-  votable: true,
-  before:  encode('0x52d41ca72af615a1ac3301b0a93efa222ecc7541'),
-  after:   encode('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'),
-}, {
-  name:    "reward.deferredtxfee",
-  votable: true,
-  before:  encode('true'),
-  after:   encode('false'),
-}, {
-  name:    "reward.mintingamount",
-  votable: true,
-  before:  encode('9600000000000000000'),
-  after:   encode('12000000000000000000'),
-}];
-
-for ([i, param] of params.entries()) {
-  param.id = i;
-}
-
 describe("GovParam", function () {
   let accounts, addrs;
   let gp;
@@ -100,7 +53,7 @@ describe("GovParam", function () {
     accounts = await hre.ethers.getSigners();
     addrs = _.map(accounts, 'address');
     voteContract = accounts[1];
-    nonvoter = accounts[10];
+    nonvoter = accounts[2];
     const GovParam = await ethers.getContractFactory("GovParam");
     gp = await GovParam.deploy(addrs[0]);
     await gp.deployed();
@@ -117,39 +70,40 @@ describe("GovParam", function () {
   });
 
   describe("addParam", function () {
+    const param = {
+      id:      13,
+      name:    "custom.mynewparam",
+      votable: false,
+      val:     "0x41414141",
+    };
+
     it("addParam success", async function () {
-      param = params[0];
-      p = await gp.addParam(param.id, param.name, false, param.before);
-      await sleep(2000);
-      p = await gp.getParam(0);
-      expect(p).to.equal(param.before);
+      await gp.addParam(param.id, param.name, param.votable, param.val);
+      //p = await gp.getParam(param.id);
+      //expect(p).to.equal(param.val);
     });
 
-    it("addParam from nonvoter should fail", async function () {
-      param = params[0];
-      await expect(gp.connect(nonvoter).addParam(param.id, param.name, false, param.before))
-        .to.be.revertedWith(PERMISSION_DENIED);
+    it("addParam from non owner should fail", async function () {
+      await expect(gp.connect(nonvoter).addParam(param.id, param.name, false, param.val))
+        .to.be.revertedWith(NOT_OWNER);
     });
 
     it("addParam of empty name should fail", async function () {
-      param = params[0];
-      await expect(gp.addParam(param.id, "", false, param.before))
+      await expect(gp.addParam(param.id, "", false, param.val))
         .to.be.revertedWith(EMPTYNAME_DENIED);
     });
 
     it("addParam of existing param should fail", async function () {
-      param = params[0];
-      await gp.addParam(param.id, param.name, false, param.before);
-      await expect(gp.addParam(param.id, param.name, false, param.before))
+      await gp.addParam(param.id, param.name, false, param.val);
+      await expect(gp.addParam(param.id, param.name, false, param.val))
         .to.be.revertedWith(EXISTING_PARAM);
     });
   });
 
   describe("setParam", function () {
-    it("setParam success", async function () {
-      param = params[0];
-      await gp.addParam(param.id, param.name, param.votable, param.before);
+    let param = params[5];
 
+    it("setParam success", async function () {
       now = await getnow();
       await expect(gp.setParam(param.id, param.after, now + 10000))
         .to.emit(gp, 'SetParam').withArgs(param.id, param.name, param.after, now + 10000);
@@ -163,42 +117,34 @@ describe("GovParam", function () {
     });
 
     it("setParam from voteContract should succeed when votable", async function () {
-      param = params[0];
       await gp.setVoteContract(voteContract.address);
-      await gp.addParam(param.id, param.name, param.votable, param.before);
-
+      await gp.setParamVotable(param.id, true);
       now = await getnow();
       await expect(gp.connect(voteContract).setParam(param.id, param.after, now + 100))
         .to.emit(gp, 'SetParam').withArgs(param.id, param.name, param.after, now + 100);
     });
 
     it("setParam from voteContract should fail when not votable", async function () {
-      param = params[0];
       await gp.setVoteContract(voteContract.address);
-      await gp.addParam(param.id, param.name, false, param.before);
-
       now = await getnow();
       await expect(gp.connect(voteContract).setParam(param.id, param.after, now + 100))
         .to.be.revertedWith(PERMISSION_DENIED);
     });
 
     it("setParam from nonvoter should fail", async function () {
-      param = params[0];
+      await gp.setParamVotable(param.id, true);
       await expect(gp.connect(nonvoter).setParam(param.id, param.after, 10000))
         .to.be.revertedWith(PERMISSION_DENIED);
     });
 
     it("setParam of nonexistent id should fail", async function () {
-      param = params[0];
       now = await getnow();
       await expect(gp.setParam(100, param.after, now + 10000))
         .to.be.revertedWith(NO_PARAM);
     });
 
     it("setParam of existing pending change should fail", async function () {
-      param = params[0];
-      await gp.addParam(param.id, param.name, param.votable, param.before);
-
+      await gp.setParamVotable(param.id, true);
       now = await getnow();
       await gp.setParam(param.id, param.after, now + 10000);
       await expect(gp.setParam(param.id, param.after, now + 10000))
@@ -206,9 +152,7 @@ describe("GovParam", function () {
     });
 
     it("setParam of past block should fail", async function () {
-      param = params[0];
-      await gp.addParam(param.id, param.name, param.votable, param.before);
-
+      await gp.setParamVotable(param.id, true);
       now = await getnow();
       await expect(gp.setParam(param.id, param.after, now - 50))
         .to.be.revertedWith(ALREADY_PAST);
@@ -216,9 +160,8 @@ describe("GovParam", function () {
   });
 
   describe("setParamVotable", function () {
-    it("setParam success", async function () {
-      param = params[0];
-      await gp.addParam(param.id, param.name, param.votable, param.before);
+    let param = params[5];
+    it("setParamVotable success", async function () {
       await gp.setParamVotable(param.id, true);
       await gp.setParamVotable(param.id, false);
     });
@@ -226,9 +169,6 @@ describe("GovParam", function () {
 
   describe("getAllParams", function () {
     it("getAllParams success", async function () {
-      for (param of params) {
-        await gp.addParam(param.id, param.name, param.votable, param.before);
-      }
       expected = _.map(params, i => ([ i.name, i.before ]));
       expect(await gp.getAllParams()).to.deep.equal(expected);
     });
@@ -236,23 +176,30 @@ describe("GovParam", function () {
 
   describe("scheduledChanges", function () {
     it("scheduledChanges success", async function () {
-      for (param of params) {
-        await gp.addParam(param.id, param.name, param.votable, param.before);
-      }
-
+      let expectedChanges = [];
       for (param of params) {
         now = await getnow();
         await expect(gp.setParam(param.id, param.after, now + 10000))
           .to.emit(gp, 'SetParam')
           .withArgs(param.id, param.name, param.after, now + 10000);
+        obj = [
+          param.name,
+          ethers.BigNumber.from(now + 10000),
+          param.after,
+        ];
+        obj.name = obj[0];
+        obj.blocknum = obj[1];
+        obj.value = obj[2];
+        expectedChanges.push(obj);
       }
 
       for (param of params) {
         expect(await gp.getParam(param.id)).to.equal(param.before);
       }
 
-      p = await gp.scheduledChanges();
-      expect(p[0]).to.equal(params.length);
+      [len, changes] = await gp.scheduledChanges();
+      expect(len).to.equal(params.length);
+      expect(changes.slice(0, len)).to.deep.equal(expectedChanges.slice(0, len));
 
       await mineMoreBlocks(await getnow() + 10000);
 
@@ -261,8 +208,9 @@ describe("GovParam", function () {
         expect(p).to.equal(param.after);
       }
 
-      p = await gp.scheduledChanges();
-      expect(p[0]).to.equal(0);
+      [len, changes] = await gp.scheduledChanges();
+      expect(len).to.equal(0);
+      expect(changes.slice(0, len)).to.deep.equal([]);
     });
   });
 
