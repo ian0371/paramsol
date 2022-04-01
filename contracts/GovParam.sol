@@ -46,18 +46,18 @@ contract GovParam is Ownable {
 
     constructor(address _owner) {
         addParam(0, "governance.governancemode", false, "single");
-        addParam(1, "governance.governingnode", false, "0x52d41ca72af615a1ac3301b0a93efa222ecc7541");
-        addParam(2, "istanbul.epoch", false, "0x093a80");
-        addParam(3, "istanbul.policy", false, "0x00");
-        addParam(4, "istanbul.committeesize", false, "0x01");
-        addParam(5, "governance.unitprice", false, "0x05d21dba00");
-        addParam(6, "reward.mintingamount", false, "9000000000000000000000000000000000000");
+        addParam(1, "governance.governingnode", false, hex"52d41ca72af615a1ac3301b0a93efa222ecc7541");
+        addParam(2, "istanbul.epoch", false, hex"093a80");
+        addParam(3, "istanbul.policy", false, hex"00");
+        addParam(4, "istanbul.committeesize", false, hex"01");
+        addParam(5, "governance.unitprice", false, hex"05d21dba00");
+        addParam(6, "reward.mintingamount", false, "9000000000000000000");
         addParam(7, "reward.ratio", false, "34/54/12");
-        addParam(8, "reward.useginicoeff", false, "0x01");
-        addParam(9, "reward.deferredtxfee", false, "0x01");
-        addParam(10, "reward.minimumstake", false, "5000000");
-        addParam(11, "reward.stakingupdateinterval", false, "0x015180");
-        addParam(12, "reward.proposerupdateinterval", false, "0x0e10");
+        addParam(8, "reward.useginicoeff", false, hex"01");
+        addParam(9, "reward.deferredtxfee", false, hex"01");
+        addParam(10, "reward.minimumstake", false, hex"4c4b40");
+        addParam(11, "reward.stakingupdateinterval", false, hex"015180");
+        addParam(12, "reward.proposerupdateinterval", false, hex"0e10");
 
         if (_owner != address(0)) {
             console.log("Transferring ownership to", _owner);
