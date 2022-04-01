@@ -13,102 +13,10 @@ npx hardhat coverage
 ## Klaytn-deploy
 ### Prerequisites
 - Clone `klaytn-deploy` and checkout to pr20 (`git fetch origin pull/20/head:pr-20 && git checkout pr-20`)
-- `npm install`
-- `npx hardhat compile`
-- Patch using the following diff after copying `conf.template.json` to `conf.json` (you can adjust `--params-contract-blocknumber` for faster experiment):
-
-```diff
---- conf.template.json	2022-03-30 16:45:56.000000000 +0900
-+++ conf.json	2022-04-01 16:51:27.000000000 +0900
-@@ -27,10 +27,10 @@
-         "aidankwon/dev:go1.15.7-solc0.4.24"
- 	],
-       "git":{
--        "ref":"git@github.com:klaytn/klaytn.git",
--        "branch":"dev"
-+        "ref":"git@github.com:blukat29/klaytn.git",
-+        "branch":"gov/try3"
-       },
--      "homiOption": "--baobab-test",
-+      "homiOption": "--baobab-test --params-contract-address 0xe0eCF71FdF7fA61b35F5a8EF04FCa81CE2cf07Aa --params-contract-blocknumber 300",
-       "_chaindata": "lumberjack",
-       "_chaindata": "https://s3.ap-northeast-2.amazonaws.com/klaytn-chaindata/baobab/klaytn-baobab-chaindata-20200601010611.tar.gz",
-       "overwriteGenesis": false
-@@ -104,7 +104,7 @@
-     },
-     "PN": {
-       "aws":{
--        "numNodes":4,
-+        "numNodes":1,
-         "instanceType":"m5.large",
-         "userName":"ubuntu",
-         "imageId":"ami-0b277531c0f0dd2e9",
-@@ -120,7 +120,7 @@
-     },
-     "EN": {
-       "aws":{
--        "numNodes":4,
-+        "numNodes":1,
-         "instanceType":"m5.large",
-         "userName":"ubuntu",
-         "imageId":"ami-0b277531c0f0dd2e9",
-@@ -133,13 +133,13 @@
-         "_NETWORK_ID": "",
-         "_NO_DISCOVER": "0",
-         "RPC_PORT":8551,
--        "RPC_API":"klay,personal",
-+        "RPC_API":"db,klay,net,web3,miner,personal,txpool,debug,admin,istanbul,mainbridge,subbridge,eth",
-         "DATA_DIR":"~/klaytn/data",
-         "LOG_DIR":"~/klaytn/logs"
-       }
-     },
-     "CNBN":{
--      "enabled":true,
-+      "enabled":false,
-       "discoveryPort":32323,
-       "aws": {
-         "numNodes":1,
-@@ -156,7 +156,7 @@
-       }
-     },
-     "BN":{
--      "enabled":true,
-+      "enabled":false,
-       "discoveryPort":32323,
-       "aws": {
-         "numNodes":1,
-@@ -237,10 +237,10 @@
-       }
-     },
-     "grafana":{
--      "enabled":true,
-+      "enabled":false,
-       "prometheusPort":61001,
-       "aws": {
--        "numNodes":1,
-+        "numNodes":0,
-         "imageId":"ami-07d607e091494cbd8",
-         "instanceType":"m5.large",
-         "securityGroup": ["sg-0f0a2202b1603b972"],
-@@ -249,7 +249,7 @@
-       }
-     },
-     "locustMaster":{
--      "enabled":true,
-+      "enabled":false,
-       "performanceTest": {
-         "noweb": false,
-         "terminateInstancesAfterTest": false,
-@@ -286,7 +286,7 @@
-       }
-     },
-     "locustSlave": {
--      "enabled":true,
-+      "enabled":false,
-       "enabledEthTest": false,
-       "_endpoints":["CN", "PN", "EN", "http://{IP}:{Port}"],
-       "endpoints":["EN"],
-```
+- Copy `conf.json.diff` from this repo to `klaytn-deploy` and run from `klaytn-deploy`: `cp conf.template.json conf.json && git apply conf.json.diff`
+- Run `npm install`
+- Run `npx hardhat compile`
+- (optional) If you want, you can adjust `--params-contract-blocknumber` in `conf.json` for faster experiment. Note that the contract must exist beyond the block. Default is block #300.
 - Run `1.create.sh`, `2-1.build.sh`, `2-2.genesis.sh`, `2-3.prepare.sh` from `klaytn-deploy`. DO NOT PROCEED MORE AND STOP AFTER RUNNING `2-3.prepare.sh`.
 - Appropriately fill in the `<NAME>` in `hardhat.config.js`. A private key of a rich account can be found in `upload/CN0/keys/nodekey`. DO NOT change the contract private key, and DO NOT put multiple rich accounts.
 ```
@@ -124,7 +32,7 @@ npx hardhat coverage
     },
 ```
 
-## Run
+### Run
 Before running klaytn-deploy instances, *be ready to run the following commands*.
 If the block number set by `--params-contract-blocknumber` passes without deploying the contract, nodes will crash.
 Run the rest of `klaytn-deploy` (i.e., `2-4.upload.sh`, `2-5.init.sh`, and `3.start.sh`) and type the commands after checking KEN works:
