@@ -13,7 +13,7 @@ npx hardhat coverage
 ## Klaytn-deploy
 ### Prerequisites
 - Clone `klaytn-deploy` and checkout to pr20 (`git fetch origin pull/20/head:pr-20`)
-- Patch using the following diff (you can adjust `--params-contract-blocknumber` for faster experiment):
+- Patch using the following diff after copying `conf.template.json` to `conf.json` (you can adjust `--params-contract-blocknumber` for faster experiment):
 
 ```diff
 --- conf.template.json	2022-03-30 16:45:56.000000000 +0900
