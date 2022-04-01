@@ -55,7 +55,7 @@ contract GovParam is Ownable {
         addParam(7, "reward.ratio", false, "34/54/12");
         addParam(8, "reward.useginicoeff", false, hex"01");
         addParam(9, "reward.deferredtxfee", false, hex"01");
-        addParam(10, "reward.minimumstake", false, hex"4c4b40");
+        addParam(10, "reward.minimumstake", false, "5000000");
         addParam(11, "reward.stakingupdateinterval", false, hex"015180");
         addParam(12, "reward.proposerupdateinterval", false, hex"0e10");
 

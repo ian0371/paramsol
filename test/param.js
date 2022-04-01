@@ -28,7 +28,7 @@ params = [
   {id: 7,  name: "reward.ratio",                  votable: false, before: /* 34/54/12  */"0x33342f35342f3132",                    after: /*25/25/50*/"0x32352f32352f3530"},
   {id: 8,  name: "reward.useginicoeff",           votable: false, before: /* true */"0x01",                                       after: /* false */ "0x00"},
   {id: 9,  name: "reward.deferredtxfee",          votable: false, before: /* true */"0x01",                                       after: /* false */ "0x00"},
-  {id: 10, name: "reward.minimumstake",           votable: false, before: /* 5 million */"0x4c4b40",                              after: /* 7 million */"0x6acfc0"},
+  {id: 10, name: "reward.minimumstake",           votable: false, before: /* 5 million */"0x35303030303030",                      after: /* 7 million */"0x37303030303030"},
   {id: 11, name: "reward.stakingupdateinterval",  votable: false, before: /* 86400 */"0x015180",                                  after: /* 3600 */"0x0e10"},
   {id: 12, name: "reward.proposerupdateinterval", votable: false, before: /* 3600 */"0x0e10",                                     after: /* 60 */"0x3c"},
 ];
