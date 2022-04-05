@@ -1,0 +1,90 @@
+--- conf.template.json	2022-03-30 16:45:56.000000000 +0900
++++ conf.json	2022-04-01 16:51:27.000000000 +0900
+@@ -27,10 +27,10 @@
+         "aidankwon/dev:go1.15.7-solc0.4.24"
+ 	],
+       "git":{
+-        "ref":"git@github.com:klaytn/klaytn.git",
+-        "branch":"dev"
++        "ref":"git@github.com:blukat29/klaytn.git",
++        "branch":"gov/try3"
+       },
+-      "homiOption": "--baobab-test",
++      "homiOption": "--baobab-test --params-contract-address 0xe0eCF71FdF7fA61b35F5a8EF04FCa81CE2cf07Aa --params-contract-blocknumber 300",
+       "_chaindata": "lumberjack",
+       "_chaindata": "https://s3.ap-northeast-2.amazonaws.com/klaytn-chaindata/baobab/klaytn-baobab-chaindata-20200601010611.tar.gz",
+       "overwriteGenesis": false
+@@ -104,7 +104,7 @@
+     },
+     "PN": {
+       "aws":{
+-        "numNodes":4,
++        "numNodes":1,
+         "instanceType":"m5.large",
+         "userName":"ubuntu",
+         "imageId":"ami-0b277531c0f0dd2e9",
+@@ -120,7 +120,7 @@
+     },
+     "EN": {
+       "aws":{
+-        "numNodes":4,
++        "numNodes":1,
+         "instanceType":"m5.large",
+         "userName":"ubuntu",
+         "imageId":"ami-0b277531c0f0dd2e9",
+@@ -133,13 +133,13 @@
+         "_NETWORK_ID": "",
+         "_NO_DISCOVER": "0",
+         "RPC_PORT":8551,
+-        "RPC_API":"klay,personal",
++        "RPC_API":"db,klay,net,web3,miner,personal,txpool,debug,admin,istanbul,mainbridge,subbridge,eth",
+         "DATA_DIR":"~/klaytn/data",
+         "LOG_DIR":"~/klaytn/logs"
+       }
+     },
+     "CNBN":{
+-      "enabled":true,
++      "enabled":false,
+       "discoveryPort":32323,
+       "aws": {
+         "numNodes":1,
+@@ -156,7 +156,7 @@
+       }
+     },
+     "BN":{
+-      "enabled":true,
++      "enabled":false,
+       "discoveryPort":32323,
+       "aws": {
+         "numNodes":1,
+@@ -237,10 +237,10 @@
+       }
+     },
+     "grafana":{
+-      "enabled":true,
++      "enabled":false,
+       "prometheusPort":61001,
+       "aws": {
+-        "numNodes":1,
++        "numNodes":0,
+         "imageId":"ami-07d607e091494cbd8",
+         "instanceType":"m5.large",
+         "securityGroup": ["sg-0f0a2202b1603b972"],
+@@ -249,7 +249,7 @@
+       }
+     },
+     "locustMaster":{
+-      "enabled":true,
++      "enabled":false,
+       "performanceTest": {
+         "noweb": false,
+         "terminateInstancesAfterTest": false,
+@@ -286,7 +286,7 @@
+       }
+     },
+     "locustSlave": {
+-      "enabled":true,
++      "enabled":false,
+       "enabledEthTest": false,
+       "_endpoints":["CN", "PN", "EN", "http://{IP}:{Port}"],
+       "endpoints":["EN"],
