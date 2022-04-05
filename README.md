@@ -12,7 +12,7 @@ npx hardhat coverage
 
 ## Klaytn-deploy
 ### Prerequisites
-- Clone `klaytn-deploy` and checkout to pr20 (`git fetch origin pull/20/head:pr-20 && git checkout pr-20`)
+- Clone `klaytn-deploy`
 - Copy `conf.json.diff` from this repo to `klaytn-deploy` and run from `klaytn-deploy`: `cp conf.template.json conf.json && git apply conf.json.diff`
 - Run `npm install`
 - Run `npx hardhat compile`
